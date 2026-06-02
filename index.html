@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LGS Events Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>[x-cloak] { display: none !important; }</style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans antialiased" x-data="lgsApp()" x-init="initApp()">
+
+  <header class="border-b border-slate-800 bg-slate-950 sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <h1 class="text-2xl font-bold tracking-tight text-amber-500" x-text="storeName"></h1>
+      <nav class="flex gap-4 text-sm font-medium">
+        <a href="#scheduled" class="hover:text-amber-400 transition">Scheduled Events</a>
+        <a href="#ondemand" class="hover:text-amber-400 transition">On-Demand Play</a>
+        <button @click="openModal('vendor')" class="text-slate-400 hover:text-white transition">Vendor Portal</button>
+        <button @click="openModal('volunteer')" class="text-slate-400 hover:text-white transition">Volunteer</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Landing First Impression -->
+  <main class="max-w-6xl mx-auto px-4 py-8 space-y-12">
+    <section class="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-2xl p-8 shadow-xl text-center flex flex-col items-center justify-center">
+      <h2 class="text-3xl md:text-4xl font-extrabold mb-2">Hall Hours</h2>
+      <p class="text-slate-300 leading-relaxed">Friday 5PM to 9PM<br>Saturday 9AM to 9PM<br>Sunday 9AM to 6PM</p>
+    </section>
+
+    <section id="scheduled" class="space-y-6">
+      <h3 class="text-xl font-bold border-l-4 border-amber-500 pl-3">Major Scheduled Events</h3>
+      
+      <div x-show="isLoading" class="text-slate-400 animate-pulse flex gap-2 items-center">
+        <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        Syncing live data from The Caves...
+      </div>
+
+      <div x-cloak x-show="!isLoading && events.length === 0" class="bg-slate-950 border border-dashed border-slate-800 rounded-xl p-8 text-center text-slate-400 text-sm">
+        📭 There are currently no major scheduled events. Check back soon!
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6" x-cloak x-show="!isLoading && events.length > 0">
+        <template x-for="evt in events" :key="evt.id">
+          <div class="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden flex flex-col justify-between shadow-lg hover:border-slate-700 transition">
+            <div>
+              <div x-show="evt.thumbnail" class="w-full aspect-video bg-slate-900 overflow-hidden relative border-b border-slate-800">
+                <img :src="evt.thumbnail" alt="Event cover image" class="w-full h-full object-cover">
+              </div>
+              <div class="p-6">
+                <div class="flex flex-wrap justify-between items-start gap-2 mb-3">
+                  <span class="bg-slate-800 text-slate-300 text-xs font-semibold px-2.5 py-1 rounded border border-slate-700" x-text="evt.venue"></span>
+                  <span class="text-amber-400 font-bold text-lg" x-text="'$' + evt.price"></span>
+                </div>
+                <h4 class="text-xl font-bold text-white mb-2" x-text="evt.title"></h4>
+                <div class="text-sm text-slate-400 mb-4 space-y-1">
+                  <p>📅 <strong class="text-slate-200" x-text="evt.date ? new Date(evt.date + 'T00:00:00-08:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/Vancouver' }) : ''"></strong></p>
+                  <p>⏰ Starts at: <strong class="text-slate-200" x-text="evt.time"></strong></p>
+                </div>
+                <p class="text-slate-300 text-sm leading-relaxed" x-text="evt.description"></p>
+              </div>
+            </div>
+            <div class="px-6 pb-6">
+              <button @click="openModal('register', evt.title)" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition text-sm">Preregister Now</button>
+            </div>
+          </div>
+        </template>
+      </div>
+    </section>
+
+    <section id="ondemand" class="space-y-6 bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-md">
+      <div>
+        <h3 class="text-xl font-bold text-white">Continuous On-Demand Hub</h3>
+        <p class="text-sm text-slate-400">No strict schedules. Show up, state your interest, and play instantly when groups fill.</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <template x-for="(item, index) in onDemandEvents" :key="index">
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <h4 class="font-bold text-amber-400 mb-1" x-text="'⚡ ' + item.title"></h4>
+            <p class="text-xs text-slate-300 leading-normal" x-text="item.details"></p>
+          </div>
+        </template>
+      </div>
+    </section>
+  </main>
+
+  <div x-cloak x-show="activeModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div @click.away="closeModal()" class="bg-slate-950 border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button @click="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">✕</button>
+
+      <div x-show="submitSuccess" class="text-center py-8 space-y-3">
+        <div class="text-4xl text-emerald-500">🎉</div>
+        <h4 class="text-xl font-bold text-white">Submission Complete!</h4>
+        <p class="text-sm text-slate-400">Your information has been successfully stashed in The Caves.</p>
+        <button @click="closeModal()" class="mt-4 bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm transition">Close Window</button>
+      </div>
+
+      <div x-show="!submitSuccess">
+<!-- Registrant Form -->        
+        <form x-show="activeModal === 'register'" @submit.prevent="submitForm('register', $el)" class="space-y-4">
+          <div>
+            <h4 class="text-lg font-bold text-white">Event Registration</h4>
+            <p class="text-xs text-amber-500 mt-1 font-medium">Selected: <span x-text="selectedEvent"></span></p>
+          </div>
+          <div><label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Full Name</label><input name="fullName" type="text" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-indigo-500" /></div>
+          <div><label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Email</label><input name="email" type="email" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-indigo-500" /></div>
+          <div><label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Phone</label><input name="phone" type="tel" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-indigo-500" /></div>
+          <button type="submit" :disabled="isSubmitting" class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-800 text-white font-medium py-2 rounded-lg text-sm transition" x-text="isSubmitting ? 'Handing registration to goblin…' : 'Complete Preregistration'"></button>
+        </form>
+<!-- Vendor Form -->
+        <form x-show="activeModal === 'vendor'" @submit.prevent="submitForm('vendor', $el)" class="space-y-4">
+          <h4 class="text-lg font-bold text-white">Vendor Application</h4>
+          <div><label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Company Name</label><input name="vendorName" type="text" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-indigo-500" /></div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Email</label><input name="email" type="email" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" /></div>
+            <div><label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Phone</label><input name="phone" type="tel" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" /></div>
+          </div>
+          <div><label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Product Type</label><input name="productType" type="text" placeholder="e.g., TCG Singles, Playmats" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" /></div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Booths</label><input name="booths" type="number" min="1" value="1" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" /></div>
+            <div><label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Power?</label><select name="power" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"><option value="Yes">Yes</option><option value="No">No</option></select></div>
+          </div>
+          <button type="submit" :disabled="isSubmitting" class="w-full bg-indigo-600 disabled:bg-slate-800 text-white font-medium py-2 rounded-lg text-sm" x-text="isSubmitting ? 'Handing registration to goblin…' : 'Submit Vendor Request'"></button>
+        </form>
+<!-- Volunteer Form -->
+        <form x-show="activeModal === 'volunteer'" @submit.prevent="submitForm('volunteer', $el)" class="space-y-4">
+          <h4 class="text-lg font-bold text-white">Volunteer Application</h4>
+          <div><label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Full Name</label><input name="fullName" type="text" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" /></div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Email</label><input name="email" type="email" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" /></div>
+            <div><label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Phone</label><input name="phone" type="tel" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" /></div>
+          </div>
+          <div><label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Area of Interest</label><input name="interest" type="text" placeholder="e.g., Magic Judge, Lorcana Organizer" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" /></div>
+          <div><label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Availability</label><input name="availability" type="text" placeholder="e.g., Full weekend" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" /></div>
+          <button type="submit" :disabled="isSubmitting" class="w-full bg-indigo-600 disabled:bg-slate-800 text-white font-medium py-2 rounded-lg text-sm" x-text="isSubmitting ? 'Handing registration to goblin…' : 'Submit Application'"></button>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('lgsApp', () => ({
+        // App Scripts API
+        apiUrl: 'https://script.google.com/macros/s/AKfycbyta0ADcea5WjMpHWSaoKPr5HlEvDkXmlCDw-8s3LaLdGHOVUOpTlH7Nt4of-2-F1dR/exec',
+        storeName: '3 Goblins Games',
+        events: [],
+        isLoading: true,
+        activeModal: null, 
+        selectedEvent: '',
+        isSubmitting: false,
+        submitSuccess: false,
+
+        onDemandEvents: [
+          { title: "Endless MTG Commander Pods", details: "Fires off as soon as 4 players register." },
+          { title: "On-Demand Booster Drafts", details: "Fires at 8 players. Standard or Masters sets." },
+          { title: "Learn to Play Tables", details: "Free tutorial sessions. Decks provided!" }
+        ],
+
+        async initApp() {
+          try {
+            const response = await fetch(`${this.apiUrl}?action=getEvents`);
+            const rawText = await response.text();
+            const cleanData = JSON.parse(rawText);
+            
+            if (cleanData && cleanData.status === 'success') {
+              this.events = cleanData.events || [];
+            }
+          } catch (error) {
+            console.error("Failed to fetch events from The Caves:", error);
+          } finally {
+            this.isLoading = false;
+          }
+        },
+
+        openModal(type, eventTitle = '') {
+          this.activeModal = type;
+          this.selectedEvent = eventTitle;
+          this.submitSuccess = false;
+        },
+
+        closeModal() {
+          this.activeModal = null;
+          setTimeout(() => { this.submitSuccess = false; this.selectedEvent = ''; }, 300);
+        },
+
+        async submitForm(actionType, formElement) {
+          this.isSubmitting = true;
+          const formData = new FormData(formElement);
+          const payload = { action: actionType };
+          formData.forEach((value, key) => payload[key] = value);
+          
+          if (actionType === 'register') payload.eventName = this.selectedEvent;
+
+          try {
+            await fetch(this.apiUrl, {
+              method: 'POST',
+              mode: 'no-cors', 
+              headers: { 'Content-Type': 'text/plain' },
+              body: JSON.stringify(payload)
+            });
+            this.submitSuccess = true;
+            formElement.reset(); 
+          } catch (error) {
+            alert("Network error. Please check your connection and try again.");
+          } finally {
+            this.isSubmitting = false;
+          }
+        }
+      }));
+    });
+  </script>
+</body>
+</html>
