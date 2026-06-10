@@ -25,12 +25,17 @@
   <!-- Landing First Impression -->
   <main class="max-w-6xl mx-auto px-4 py-8 space-y-12">
     
-    <section>
+    <section class="space-y-4">
       <img 
         src="https://lh3.googleusercontent.com/d/1dYmD3VlR64yXkitSZZ6YwMbIpzQp_tdF" 
         alt="Gaming Prince George Event Banner" 
         class="w-full rounded-2xl shadow-xl border border-slate-800"
       >
+      <div class="text-center md:text-left px-2">
+        <p class="text-white text-base md:text-lg font-medium tracking-wide">
+          📍 Venue: <span class="font-semibold">2187 Ospika Boulevard South, Prince George, BC V2N 6Z1</span>
+        </p>
+      </div>
     </section>
 
     <section class="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-2xl p-8 shadow-xl text-center flex flex-col items-center justify-center">
@@ -127,7 +132,7 @@
           </div>
           <div><label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Product Type</label><input name="productType" type="text" placeholder="e.g., TCG Singles, Playmats" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" /></div>
           <div class="grid grid-cols-2 gap-2">
-            <div><label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Booths</label><input name="booths" type="number" min="1" value="1" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" /></div>
+            <div><label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Booths <span class="italic normal-case">(10 foot intervals) ($150 per booth)</span></label><input name="booths" type="number" min="1" value="1" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" /></div>
             <div><label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Power?</label><select name="power" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"><option value="Yes">Yes</option><option value="No">No</option></select></div>
           </div>
           <button type="submit" :disabled="isSubmitting" class="w-full bg-indigo-600 disabled:bg-slate-800 text-white font-medium py-2 rounded-lg text-sm" x-text="isSubmitting ? 'Handing registration to goblin…' : 'Submit Vendor Request'"></button>
